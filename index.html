@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZOTAC AI NAS Mockup</title>
+  <meta name="description" content="Clickable Android, iOS and tablet mockup of a companion app for a ZOTAC AI NAS.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="page-head">
+    <div class="brand">
+      <img class="logo" src="assets/zotac-logo.png" alt="ZOTAC">
+      <span class="brand-sub">AI NAS · app mockup</span>
+    </div>
+    <div class="page-controls">
+      <div class="seg" role="tablist" aria-label="Devices to show">
+        <button data-view="all" class="on">All</button>
+        <button data-view="android">Android</button>
+        <button data-view="ios">iOS</button>
+        <button data-view="tablet">Tablet</button>
+      </div>
+      <div class="seg" aria-label="Tablet platform">
+        <button data-tabos="ios" class="on">iPadOS</button>
+        <button data-tabos="android">Android tablet</button>
+      </div>
+      <button class="theme-btn" data-page-theme aria-label="Toggle light or dark theme"></button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="row phones">
+      <figure class="device-col" data-dev-col="android">
+        <div class="device-wrap"><div class="device android-phone"><div class="screen" id="screen-android" data-dev="android"></div></div></div>
+        <figcaption>Android · phone</figcaption>
+      </figure>
+      <figure class="device-col" data-dev-col="ios">
+        <div class="device-wrap"><div class="device iphone"><div class="screen" id="screen-ios" data-dev="ios"></div></div></div>
+        <figcaption>iOS · iPhone</figcaption>
+      </figure>
+    </div>
+    <div class="row">
+      <figure class="device-col" data-dev-col="tablet">
+        <div class="device-wrap"><div class="device tablet"><div class="screen" id="screen-tablet" data-dev="tablet"></div></div></div>
+        <figcaption id="tablet-cap">Tablet · iPadOS</figcaption>
+      </figure>
+    </div>
+    <p class="note">This is a mockup with sample data. Every screen is clickable, and the Ask tab gives scripted answers to questions about photos, insurance, your day, devices or disks.</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
