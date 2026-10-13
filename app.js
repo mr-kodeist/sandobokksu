@@ -65,7 +65,7 @@ const LOGO = '<img class="logo" src="assets/zotac-logo.png" alt="ZOTAC">';
 
 /* ---------------- Shared sample data ---------------- */
 const S = {
-  theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+  theme: document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
   promptDismissed: false,
   locating: false,
   nas: { host: 'zotac-nas.local', uptime: '23d 4h 12m', cpu: 18, memUsed: 9.2, memTotal: 32, temp: 46, ai: 34, net: 112, lastBoot: '20 Sep, 05:29' },
