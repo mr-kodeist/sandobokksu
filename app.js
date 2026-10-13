@@ -58,7 +58,18 @@ const ICONS = {
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7L11.5 6.8"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 20.5c1-4 4.2-6 8-6s7 2 8 6"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5h.01"/>',
+  wave: '<path d="M2 9c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0"/><path d="M2 15c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0"/>',
+  rain: '<path d="M7 14.5h10a4 4 0 0 0 .4-8A6 6 0 0 0 6.3 5.6 4.5 4.5 0 0 0 7 14.5z"/><path d="M8 18l-1 2.5M12 18l-1 2.5M16 18l-1 2.5"/>',
+  snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/><path d="M9.5 4.5 12 6l2.5-1.5M9.5 19.5 12 18l2.5 1.5"/>',
+  storm: '<path d="M7 14.5h10a4 4 0 0 0 .4-8A6 6 0 0 0 6.3 5.6 4.5 4.5 0 0 0 7 14.5z"/><path d="m12.5 15-2 3.5h3l-2 3.5"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.9 1.5-1.9-.3-1 .3-2.1 1.5-2.1H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
+  chip: '<rect x="5" y="5" width="14" height="14" rx="2.5"/><path d="M9 9h6v6H9zM9 2.5V5M15 2.5V5M9 19v2.5M15 19v2.5M2.5 9H5M2.5 15H5M19 9h2.5M19 15h2.5"/>',
+  download: '<path d="M12 3.5V15M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19.5h14"/>',
 };
+
+/* Mascot artwork. Drop a transparent PNG at assets/mascot-head.png and it is picked up
+   automatically (see the probe at the end of this file). Until then a labelled placeholder is shown. */
+const MASCOT = { head: '' };
 const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const LOGO = '<img class="logo" src="assets/zotac-logo.png" alt="ZOTAC">';
@@ -68,6 +79,19 @@ const S = {
   theme: document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
   promptDismissed: false,
   locating: false,
+  bg: 'wave',            // none | wave | weather | mascot
+  weather: 'rain',       // sunny | cloudy | rain | snow | storm | night (sample data)
+  askIcon: 'spark',      // spark | mascot
+  reduceMotion: false,
+  activeModel: 'local-8b',
+  models: [
+    { id: 'local-8b', name: 'Local LLM · 8B', cloud: false, installed: true, size: '4.9 GB', desc: 'Fast. Good for everyday questions and search.' },
+    { id: 'local-14b', name: 'Local LLM · 14B', cloud: false, installed: true, size: '8.7 GB', desc: 'Better reasoning and writing. Slower answers.' },
+    { id: 'local-vision', name: 'Local vision model', cloud: false, installed: true, size: '3.2 GB', desc: 'Understands photos and scans. Used by Media Tagger.' },
+    { id: 'local-32b', name: 'Local LLM · 32B', cloud: false, installed: false, size: '19 GB', desc: 'Best local quality. Needs the 32 GB memory upgrade.' },
+    { id: 'cloud-a', name: 'Cloud model A', cloud: true, provider: 'Provider A', desc: 'Most capable. Needs an internet connection.' },
+    { id: 'cloud-b', name: 'Cloud model B', cloud: true, provider: 'Provider B', desc: 'Fast cloud model with long context.' },
+  ],
   nas: { host: 'zotac-nas.local', uptime: '23d 4h 12m', cpu: 18, memUsed: 9.2, memTotal: 32, temp: 46, ai: 34, net: 112, lastBoot: '20 Sep, 05:29' },
   pool: { name: 'Main pool', raid: 'RAID 5', used: 14.2, total: 21.8 },
   uptime30: [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,99.2,100,100,100,100,100,100,100],
@@ -85,13 +109,13 @@ const S = {
   ],
   users: [
     { id: 'u1', name: 'Alex Chen', email: 'alex@home.lan', role: 'Owner', you: true, color: '#FFC20E', used: 3.4, quota: null, last: 'Active now',
-      ai: { ask: true, drive: true, web: true, agents: true }, folders: { 'Family Photos': 'rw', Documents: 'rw', Media: 'rw', Backups: 'rw' } },
+      ai: { ask: true, drive: true, web: true, agents: true, cloud: true }, folders: { 'Family Photos': 'rw', Documents: 'rw', Media: 'rw', Backups: 'rw' } },
     { id: 'u2', name: 'Jordan Chen', email: 'jordan@home.lan', role: 'Admin', color: '#9FD4FF', used: 2.1, quota: 4, last: '2 h ago',
-      ai: { ask: true, drive: true, web: true, agents: true }, folders: { 'Family Photos': 'rw', Documents: 'rw', Media: 'rw', Backups: 'r' } },
+      ai: { ask: true, drive: true, web: true, agents: true, cloud: false }, folders: { 'Family Photos': 'rw', Documents: 'rw', Media: 'rw', Backups: 'r' } },
     { id: 'u3', name: 'Maya Chen', email: 'maya@home.lan', role: 'Child', color: '#FFB3C7', used: 0.6, quota: 1, last: 'Yesterday',
-      ai: { ask: true, drive: false, web: false, agents: false }, folders: { 'Family Photos': 'r', Documents: 'none', Media: 'r', Backups: 'none' } },
+      ai: { ask: true, drive: false, web: false, agents: false, cloud: false }, folders: { 'Family Photos': 'r', Documents: 'none', Media: 'r', Backups: 'none' } },
     { id: 'u4', name: 'Sam Rivera', email: 'sam@guest', role: 'Guest', color: '#C5E8B7', used: 0.1, quota: 0.25, last: '5 days ago',
-      ai: { ask: true, drive: false, web: true, agents: false }, folders: { 'Family Photos': 'none', Documents: 'none', Media: 'r', Backups: 'none' } },
+      ai: { ask: true, drive: false, web: true, agents: false, cloud: false }, folders: { 'Family Photos': 'none', Documents: 'none', Media: 'r', Backups: 'none' } },
   ],
   apps: [
     { id: 'gdrive', group: 'Google services', name: 'Google Drive', letter: 'D', color: '#1A73E8', on: true, desc: '18,420 files indexed for semantic search' },
@@ -270,6 +294,28 @@ function li({ icon, tile = '', title, sub = '', trail = '', a = '', chev = false
   return `<${tag} class="li ${lead ? '' : 'noicon'}" ${a ? `data-a="${a}"` : ''}>${lead}<div class="body"><div class="t">${title}</div>${sub ? `<div class="s ${subWrap ? 'wrap-text' : ''}">${sub}</div>` : ''}</div>${trail}${chev ? ic('chevR', 'sm chev') : ''}</${tag}>`;
 }
 const list = rows => `<div class="list">${rows.join('')}</div>`;
+const WEATHER = {
+  sunny: { label: 'Sunny', temp: '24 °C', icon: 'sun' },
+  cloudy: { label: 'Cloudy', temp: '18 °C', icon: 'cloud' },
+  rain: { label: 'Light rain', temp: '14 °C', icon: 'rain' },
+  snow: { label: 'Snow', temp: '−2 °C', icon: 'snow' },
+  storm: { label: 'Thunderstorm', temp: '16 °C', icon: 'storm' },
+  night: { label: 'Clear night', temp: '11 °C', icon: 'moon' },
+};
+const BACKGROUNDS = [
+  { id: 'none', label: 'Plain', icon: 'close' },
+  { id: 'wave', label: 'Waves', icon: 'wave' },
+  { id: 'weather', label: 'Live weather', icon: 'rain' },
+  { id: 'mascot', label: 'Mascot', icon: 'user' },
+];
+const model = id => S.models.find(m => m.id === id);
+const activeModel = () => model(S.activeModel);
+// Mascot head image, or a labelled placeholder when no artwork is installed.
+const mascotHead = (cls = '') => MASCOT.head
+  ? `<img class="mhead ${cls}" src="${MASCOT.head}" alt="Mascot">`
+  : `<span class="mhead ph ${cls}" title="Mascot placeholder">M</span>`;
+// The Ask icon follows the user's choice in Appearance.
+const askIc = (cls = '') => S.askIcon === 'mascot' ? mascotHead(cls) : ic('spark', cls);
 const poolPill = () => S.pool.rebuilding ? '<span class="pill accent">Rebuilding · 3%</span>' : '<span class="pill ok">Healthy</span>';
 const statePill = s => s === 'ok' ? '<span class="pill ok"><span class="dot"></span>Online</span>'
   : s === 'warn' ? '<span class="pill warn">Attention</span>' : '<span class="pill neutral">Offline</span>';
@@ -280,7 +326,7 @@ function title(route) {
   return ({
     home: 'Home', ask: 'Ask', agents: 'Agents', storage: 'Storage', more: 'More', users: 'Users & access',
     apps: 'Connected apps', devices: 'Devices', settings: 'Settings', planner: 'Plan my day',
-    tagger: 'Media Tagger', docs: 'Doc Generator',
+    tagger: 'Media Tagger', docs: 'Doc Generator', models: 'AI model', appearance: 'Theme & background',
   })[k] || (k === 'user' ? userById(arg).name : k);
 }
 
@@ -306,7 +352,7 @@ const VIEWS = {
         <button class="stat" data-a="tab:storage"><span class="lbl">${ic('clock')}Uptime</span><span class="val">${S.nas.uptime.split(' ').slice(0, 2).join(' ')}</span></button>
         <div class="stat"><span class="lbl">${ic('cpu')}CPU</span><span class="val">${S.nas.cpu}<small>%</small></span>${meter(S.nas.cpu, 'thin')}</div>
         <div class="stat"><span class="lbl">${ic('mem')}Memory</span><span class="val">${S.nas.memUsed}<small> / ${S.nas.memTotal} GB</small></span>${meter(S.nas.memUsed / S.nas.memTotal * 100, 'thin')}</div>
-        <div class="stat"><span class="lbl">${ic('spark')}AI engine</span><span class="val">${S.nas.ai}<small>% load</small></span>${meter(S.nas.ai, 'thin')}</div>
+        <button class="stat" data-a="go:models"><span class="lbl">${ic(activeModel().cloud ? 'cloud' : 'chip')}AI model</span><span class="val" style="font-size:16px">${esc(activeModel().name)}</span>${activeModel().cloud ? '<span class="pill warn">Cloud · data leaves NAS</span>' : `<span class="tiny muted">On-device · ${S.nas.ai}% load</span>`}</button>
         <div class="stat"><span class="lbl">${ic('temp')}Temperature</span><span class="val">${S.nas.temp}<small> °C</small></span></div>
         <div class="stat"><span class="lbl">${ic('net')}Network</span><span class="val">${S.nas.net}<small> Mb/s</small></span></div>
       </div>`;
@@ -327,8 +373,8 @@ const VIEWS = {
       </div>`;
     const activity = `${sh('Recent activity')}${list(S.activity.map(x => li({ icon: x.icon, tile: x.cls, title: x.t, sub: x.s })))}`;
     const greet = isIOS ? '' : `<div class="greet"><div class="muted">Tuesday, 13 October</div><h2>Good morning, Alex</h2></div>`;
-    const status = `<div class="status-line"><span class="pill ok"><span class="dot"></span>NAS online</span><span class="muted tiny">${S.nas.host} · local network</span></div>`;
-    const ask = `<button class="askbar" data-a="tab:ask">${ic('spark', 'spark')}<span class="grow">Ask or search your files…</span><span class="mic">${ic('mic', 'sm')}</span></button>`;
+    const status = `<div class="status-line"><span class="pill ok"><span class="dot"></span>NAS online</span><span class="muted tiny">${S.nas.host} · local network</span>${S.bg === 'weather' ? `<button class="pill neutral" data-a="go:appearance">${ic(WEATHER[S.weather].icon, 'xs')}${WEATHER[S.weather].label} · ${WEATHER[S.weather].temp}</button>` : ''}</div>`;
+    const ask = `<button class="askbar" data-a="tab:ask">${askIc('spark')}<span class="grow">Ask or search your files…</span><span class="mic">${ic('mic', 'sm')}</span></button>`;
     return {
       home: true,
       body: `${greet}${status}<div class="home-grid"><div>${ask}${prompt}${stats}${d.form === 'tablet' ? activity : ''}</div><div>${storage}${agents}${d.form === 'tablet' ? '' : activity}</div></div>`,
@@ -343,11 +389,15 @@ const VIEWS = {
       <div class="ask-top">
         <div class="segc"><button class="${d.mode === 'ask' ? 'on' : ''}" data-a="mode:ask">Ask</button><button class="${d.mode === 'search' ? 'on' : ''}" data-a="mode:search">Semantic search</button></div>
         <div class="chips">${scopeChip('nas', 'My NAS', 'nas', true)}${scopeChip('drive', 'Google Drive', 'cloud', app('gdrive').on)}${scopeChip('web', 'Web', 'globe', app('web').on)}</div>
-      </div>`;
+        <button class="model-chip ${activeModel().cloud ? 'cloud' : ''}" data-a="go:models">${ic(activeModel().cloud ? 'cloud' : 'lock', 'xs')}<span class="grow"><b>${esc(activeModel().name)}</b> · ${activeModel().cloud ? 'cloud, data leaves your NAS' : 'on-device, private'}</span>${ic('chevR', 'xs')}</button>
+      </div>
+      ${activeModel().cloud ? `<div class="card cloud-warn"><div class="row-flex" style="align-items:flex-start"><span class="tile warn">${ic('alert')}</span><div class="spacer">
+        <h4>You’re using a cloud model</h4><p class="tiny">Your questions and the content of files used to answer them are sent to ${esc(activeModel().provider)}. Personal data could be exposed outside your home.</p>
+        <div style="margin-top:8px"><button class="btn sm tonal" data-a="model:local-8b">Switch back to on-device</button></div></div></div></div>` : ''}`;
     let body;
     if (d.mode === 'ask') {
       body = d.chat.length ? `<div class="msgs">${d.chat.map(m => renderMsg(m, d)).join('')}</div>` : `
-        <div class="welcome"><div class="orb">${ic('spark')}</div><h3>Ask your NAS anything</h3>
+        <div class="welcome"><div class="orb ${S.askIcon === 'mascot' ? 'mascot' : ''}">${askIc()}</div><h3>Ask your NAS anything</h3>
           <p class="muted">Answers come from files and media you have access to, plus any apps you’ve connected.</p></div>
         <div class="sugg">
           ${['Plan my day', 'Find beach photos from last summer', 'Summarise my home insurance policy', 'How are my devices doing?', 'Is my storage healthy?', 'Tag my new photos']
@@ -504,6 +554,8 @@ const VIEWS = {
           li({ icon: 'wifi', title: 'Devices', sub: `${S.devices.length} on network · 2 alerts`, a: 'go:devices', chev: true }),
         ])}
         ${list([
+          li({ icon: 'chip', title: 'AI model', sub: esc(activeModel().name), a: 'go:models', chev: true }),
+          li({ icon: 'palette', title: 'Theme & background', sub: BACKGROUNDS.find(b => b.id === S.bg).label, a: 'go:appearance', chev: true }),
           li({ icon: 'settings', title: 'Settings', a: 'go:settings', chev: true }),
           li({ icon: S.theme === 'dark' ? 'moon' : 'sun', title: 'Dark theme', trail: sw(S.theme === 'dark', 'theme', 'Dark theme') }),
         ])}`,
@@ -544,7 +596,8 @@ const VIEWS = {
           ['drive', 'Include Google Drive', 'Their own connected Drive'],
           ['web', 'Web search', 'Live results in Ask'],
           ['agents', 'Use agents', 'Planner, Tagger, Doc Generator'],
-        ].map(([k, t, s]) => li({ icon: k === 'web' ? 'globe' : k === 'drive' ? 'cloud' : k === 'agents' ? 'agent' : 'spark', title: t, sub: s,
+          ['cloud', 'Allow cloud models', 'Their data may leave your NAS'],
+        ].map(([k, t, s]) => li({ icon: k === 'web' ? 'globe' : k === 'drive' || k === 'cloud' ? 'cloud' : k === 'agents' ? 'agent' : 'spark', title: t, sub: s,
           trail: sw(u.ai[k], u.role === 'Owner' ? 'noop' : `ai:${u.id}:${k}`, t) })))}
         ${u.role !== 'Owner' ? `<button class="btn block danger" data-a="toast:${esc(u.name)}’s access was paused">Pause access</button>` : ''}`,
     };
@@ -562,11 +615,63 @@ const VIEWS = {
     };
   },
 
+  models() {
+    const a = activeModel();
+    const row = m => {
+      const on = m.id === S.activeModel;
+      const trail = on ? '<span class="pill ok">In use</span>'
+        : m.downloading ? '<span class="pill neutral">Downloading…</span>'
+        : !m.cloud && !m.installed ? `<button class="btn sm tonal" data-a="model:${m.id}">${ic('download', 'xs')}${m.size}</button>`
+        : `<button class="btn sm ${m.cloud ? 'tonal' : ''}" data-a="model:${m.id}">Use</button>`;
+      return li({ icon: m.cloud ? 'cloud' : 'chip', tile: on ? 'accent' : m.cloud ? 'warn' : '', title: esc(m.name),
+        sub: esc(m.cloud ? `${m.provider} · ${m.desc}` : `${m.installed ? m.size : 'Not downloaded'} · ${m.desc}`), subWrap: true, trail });
+    };
+    return {
+      body: `
+        <div class="card ${a.cloud ? 'cloud-warn' : 'accent'}"><div class="row-flex"><span class="tile ${a.cloud ? 'warn' : ''}">${ic(a.cloud ? 'cloud' : 'chip')}</span>
+          <div class="spacer"><div class="tiny ${a.cloud ? '' : 'muted'}">Model in use</div><h4>${esc(a.name)}</h4>
+          <p class="tiny ${a.cloud ? '' : 'muted'}">${a.cloud ? `Runs at ${esc(a.provider)}. Your questions and file content leave your NAS.` : `Runs on your NAS · AI engine ${S.nas.ai}% · files stay on your network`}</p></div></div></div>
+        ${sh('On your NAS')}
+        <p class="muted tiny" style="margin:-4px 4px 10px">${ic('lock', 'xs')} Private. Nothing you ask or search leaves your home network.</p>
+        ${list(S.models.filter(m => !m.cloud).map(row))}
+        ${sh('Cloud')}
+        <div class="card cloud-warn tight"><div class="row-flex" style="align-items:flex-start">${ic('alert', 'sm')}<p class="tiny">Cloud models send your questions and the content of the files used to answer them to an outside provider. Personal content and data could be stored, logged or exposed. You’ll be asked to confirm before switching.</p></div></div>
+        ${list(S.models.filter(m => m.cloud).map(row))}
+        ${sh('Add a model')}
+        ${list([
+          li({ icon: 'download', title: 'Import a model file', sub: 'From a shared folder on the NAS', chev: true, a: 'toast:Choose a model file from /Models' }),
+          li({ icon: 'link', title: 'Connect another cloud provider', sub: 'Needs an API key from the provider', chev: true, a: 'toast:Cloud provider setup is a mockup' }),
+        ])}`,
+    };
+  },
+
+  appearance() {
+    const opt = (b, on, a, preview) => `<button class="bgopt ${on ? 'on' : ''}" data-a="${a}" aria-pressed="${on}"><span class="bgprev bgprev-${b.id}">${preview}</span><span>${b.label}</span></button>`;
+    return {
+      body: `
+        ${sh('Theme')}
+        <div class="segc"><button class="${S.theme === 'light' ? 'on' : ''}" data-a="set-theme:light">Light</button><button class="${S.theme === 'dark' ? 'on' : ''}" data-a="set-theme:dark">Dark</button></div>
+        ${sh('Background')}
+        <p class="muted tiny" style="margin:-4px 4px 10px">Shows behind the Home and Ask screens.</p>
+        <div class="bgopts">${BACKGROUNDS.map(b => opt(b, S.bg === b.id, `set-bg:${b.id}`, b.id === 'mascot' ? mascotHead('lg') : ic(b.id === 'weather' ? WEATHER[S.weather].icon : b.icon))).join('')}</div>
+        ${S.bg === 'weather' ? `${sh('Weather')}
+          <div class="chips wrap">${Object.entries(WEATHER).map(([k, w]) => `<button class="chip ${S.weather === k ? 'on' : ''}" data-a="set-weather:${k}">${ic(w.icon)}${w.label}</button>`).join('')}</div>
+          <p class="muted tiny" style="margin:8px 4px 0">Sample weather so you can preview each effect. The app would follow the forecast for your NAS’s location.</p>` : ''}
+        ${S.bg === 'mascot' && !MASCOT.head ? `<div class="card outline" style="margin-top:12px"><p class="tiny muted">Placeholder shown. Add the mascot artwork as <b>assets/mascot-head.png</b> to use it.</p></div>` : ''}
+        ${sh('Ask icon')}
+        <div class="bgopts two">
+          ${opt({ id: 'spark', label: 'Sparkle' }, S.askIcon === 'spark', 'ask-icon:spark', ic('spark'))}
+          ${opt({ id: 'mascot', label: 'Mascot head' }, S.askIcon === 'mascot', 'ask-icon:mascot', mascotHead('lg'))}
+        </div>
+        <div style="margin-top:12px">${list([li({ icon: 'wave', title: 'Reduce motion', sub: 'Keep the background still', trail: sw(S.reduceMotion, 'reduce-motion', 'Reduce motion') })])}</div>`,
+    };
+  },
+
   settings() {
     return {
       body: `
         ${sh('Appearance')}
-        <div class="segc"><button class="${S.theme === 'light' ? 'on' : ''}" data-a="set-theme:light">${'Light'}</button><button class="${S.theme === 'dark' ? 'on' : ''}" data-a="set-theme:dark">Dark</button></div>
+        ${list([li({ icon: 'palette', title: 'Theme & background', sub: `${S.theme === 'dark' ? 'Dark' : 'Light'} · ${BACKGROUNDS.find(b => b.id === S.bg).label}`, a: 'go:appearance', chev: true })])}
         ${sh('Connection')}
         ${list([
           li({ icon: 'nas', title: 'NAS address', sub: S.nas.host, trail: '<span class="pill ok">Connected</span>' }),
@@ -575,7 +680,7 @@ const VIEWS = {
         ])}
         ${sh('AI')}
         ${list([
-          li({ icon: 'spark', title: 'Local AI model', sub: 'Runs on the NAS. Files never leave your network.', subWrap: true, chev: true, a: 'toast:Model settings are a mockup' }),
+          li({ icon: activeModel().cloud ? 'cloud' : 'chip', tile: activeModel().cloud ? 'warn' : '', title: 'AI model', sub: `${esc(activeModel().name)} · ${activeModel().cloud ? 'cloud, data leaves your NAS' : 'on-device'}`, subWrap: true, chev: true, a: 'go:models' }),
           li({ icon: 'search', title: 'Re-index files', sub: 'Last full index: yesterday', chev: true, a: 'toast:Re-index queued' }),
         ])}
         ${sh('Notifications')}
@@ -590,7 +695,7 @@ const VIEWS = {
 
 function renderMsg(m, d) {
   if (m.role === 'me') return `<div class="msg me">${esc(m.text)}</div>`;
-  if (m.typing) return `<div class="msg ai"><div class="who">${ic('spark')}NAS Assistant</div><span class="typing"><i></i><i></i><i></i></span></div>`;
+  if (m.typing) return `<div class="msg ai"><div class="who">${askIc()}NAS Assistant · ${esc(m.model || activeModel().name)}</div><span class="typing"><i></i><i></i><i></i></span></div>`;
   let card = '';
   if (m.card === 'results') {
     card = m.results.length ? `<div class="inner-list">${m.results.map(r => `<div class="mini-res">${ftile(r.type)}<div class="body"><div class="t">${esc(r.name)}</div><div class="s">${SRC_LABEL[r.src]} · ${esc(r.path)}</div></div>${r.score ? `<span class="score">${r.score}%</span>` : ''}</div>`).join('')}</div>` : '';
@@ -608,7 +713,7 @@ function renderMsg(m, d) {
   } else if (m.card === 'storage') {
     card = `<div class="inner-list"><button class="btn sm tonal" data-a="tab:storage">Open storage</button></div>`;
   }
-  return `<div class="msg ai"><div class="who">${ic('spark')}NAS Assistant</div>${esc(m.text)}${card}${m.src && m.src.length ? `<div class="src">Sources: ${m.src.join(' · ')}</div>` : ''}</div>`;
+  return `<div class="msg ai"><div class="who">${askIc()}NAS Assistant · ${esc(m.model || activeModel().name)}</div>${esc(m.text)}${card}${m.src && m.src.length ? `<div class="src">Sources: ${m.src.join(' · ')}</div>` : ''}</div>`;
 }
 
 function renderResults(d) {
@@ -658,7 +763,8 @@ const TABLET_TABS = [['home', 'home', 'Home'], ['ask', 'spark', 'Ask'], ['agents
 function bottomNav(d) {
   return `<nav class="bnav">${PHONE_TABS.map(([k, i, l]) => {
     const alert = k === 'storage' && S.bays.some(b => b.state === 'missing');
-    return `<button class="${d.tab === k ? 'on' : ''}" data-a="tab:${k}">${d.platform === 'android' ? `<span class="pill ${alert ? 'badge-dot' : ''}">${ic(i)}</span>` : `<span class="${alert ? 'badge-dot' : ''}">${ic(i)}</span>`}${l}</button>`;
+    const icon = k === 'ask' ? askIc() : ic(i);
+    return `<button class="${d.tab === k ? 'on' : ''}" data-a="tab:${k}">${d.platform === 'android' ? `<span class="pill ${alert ? 'badge-dot' : ''}">${icon}</span>` : `<span class="${alert ? 'badge-dot' : ''}">${icon}</span>`}${l}</button>`;
   }).join('')}</nav>`;
 }
 
@@ -666,7 +772,7 @@ function sidebar(d) {
   const me = S.users[0];
   return `<aside class="side">
     <div class="side-brand">${LOGO}<span class="sub"><span class="pill ok"><span class="dot"></span>Online</span>${S.nas.host}</span></div>
-    ${TABLET_TABS.map(([k, i, l]) => `<button class="item ${d.tab === k ? 'on' : ''}" data-a="tab:${k}">${ic(i)}${l}</button>`).join('')}
+    ${TABLET_TABS.map(([k, i, l]) => `<button class="item ${d.tab === k ? 'on' : ''}" data-a="tab:${k}">${k === 'ask' ? askIc() : ic(i)}${l}</button>`).join('')}
     <div class="grow"></div>
     <div class="me">${avatar(me)}<div>${me.name}<small>Owner</small></div></div>
   </aside>`;
@@ -674,7 +780,8 @@ function sidebar(d) {
 
 function sheet(d) {
   if (!d.sheet) return '';
-  const b = S.bays.find(x => x.id === d.sheet);
+  if (d.sheet.type === 'cloud') return cloudSheet(d);
+  const b = S.bays.find(x => x.id === d.sheet.id);
   const missing = b.state === 'missing';
   const anim = d.sheetFresh ? 'anim' : '';
   d.sheetFresh = false;
@@ -697,30 +804,83 @@ function sheet(d) {
     </div>`;
 }
 
+function cloudSheet(d) {
+  const m = model(d.sheet.id);
+  const anim = d.sheetFresh ? 'anim' : '';
+  d.sheetFresh = false;
+  return `<div class="scrim ${anim}" data-a="close-sheet"></div>
+    <div class="sheet ${anim}" role="dialog" aria-label="Use ${esc(m.name)}">
+      ${d.form === 'phone' ? '<div class="grab"></div>' : ''}
+      <div class="row-flex"><span class="tile warn">${ic('alert')}</span><h3 class="spacer">Use ${esc(m.name)}?</h3></div>
+      <p class="tiny" style="margin:12px 0 8px;font-weight:600">Your data will leave your NAS. While a cloud model is in use:</p>
+      <ul class="disclaimer">
+        <li>Your questions, and the text of files, photos and documents used to answer them, are sent over the internet to ${esc(m.provider)}.</li>
+        <li>${esc(m.provider)}’s terms decide how that data is stored, logged or used. Once it’s sent, your NAS can’t control it.</li>
+        <li>Personal content and data might be compromised if the provider is breached or misuses it.</li>
+        <li>Agents such as Day Planner and Doc Generator will also use the cloud model.</li>
+      </ul>
+      <button class="ack" data-a="cloud-ack"><span class="check ${d.sheet.ack ? 'on' : ''}">${d.sheet.ack ? ic('check') : ''}</span><span>I understand my data will be sent outside my home network and could be exposed.</span></button>
+      <div class="actions"><button class="btn tonal" data-a="close-sheet">Keep on-device</button><button class="btn" data-a="use-cloud" ${d.sheet.ack ? '' : 'disabled'}>Use cloud model</button></div>
+    </div>`;
+}
+
 /* ---------------- Render ---------------- */
+/* Ambient background. Built once per setting and kept outside the re-rendered UI,
+   so the animation doesn't restart on every tap. */
+const seeded = i => { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); };
+const particles = (n, cls, dur) => Array.from({ length: n }, (_, i) =>
+  `<i class="${cls}" style="left:${(seeded(i + 1) * 100).toFixed(1)}%;animation-delay:-${(seeded(i + 7) * dur).toFixed(2)}s;animation-duration:${(dur * (0.7 + seeded(i + 13) * 0.6)).toFixed(2)}s"></i>`).join('');
+const WAVE_PATH = '<path d="M0 60 Q150 20 300 60 T600 60 T900 60 T1200 60 V160 H0z"/>';
+function ambientHtml() {
+  if (S.bg === 'wave') {
+    return `<div class="glow"></div>${[1, 2, 3].map(n => `<svg class="w w${n}" viewBox="0 0 1200 160" preserveAspectRatio="none" aria-hidden="true">${WAVE_PATH}</svg>`).join('')}`;
+  }
+  if (S.bg === 'mascot') {
+    return `<div class="glow"></div><div class="mascot-bg">${MASCOT.head ? `<img src="${MASCOT.head}" alt="">` : '<span class="mascot-ph">Mascot artwork<br><small>placeholder</small></span>'}</div>`;
+  }
+  const w = S.weather;
+  const clouds = n => Array.from({ length: n }, (_, i) => `<span class="cl" style="top:${8 + i * 9}%;animation-delay:-${i * 11}s;animation-duration:${40 + i * 12}s"></span>`).join('');
+  return `<div class="sky"></div>${
+    w === 'sunny' ? '<span class="sun"></span><span class="rays"></span>'
+    : w === 'cloudy' ? clouds(4)
+    : w === 'rain' ? clouds(2) + particles(45, 'drop', 1.1)
+    : w === 'storm' ? clouds(3) + particles(70, 'drop', 0.7) + '<span class="flash"></span>'
+    : w === 'snow' ? particles(40, 'flake', 9)
+    : '<span class="moon"></span>' + particles(40, 'star', 4)}`;
+}
+
 function render(d) {
   const root = document.getElementById('screen-' + d.id);
-  const prevContent = root.querySelector('.content');
+  if (!root.querySelector('.ui')) root.innerHTML = '<div class="amb-layer" aria-hidden="true"></div><div class="ui"></div>';
+  const ui = root.querySelector('.ui');
+  const amb = root.querySelector('.amb-layer');
+  const prevContent = ui.querySelector('.content');
   const sameRoute = root.dataset.route === d.route;
   const prevScroll = prevContent ? prevContent.scrollTop : 0;
   const focused = document.activeElement && root.contains(document.activeElement) && document.activeElement.dataset.input;
 
   const [key, arg] = d.route.split(':');
   const v = VIEWS[key](d, arg);
-  root.className = `screen p-${d.platform} f-${d.form}`;
+  const showAmb = S.bg !== 'none' && (key === 'home' || key === 'ask');
+  root.className = `screen p-${d.platform} f-${d.form}${showAmb ? ' amb-on' : ''}${S.reduceMotion ? ' still' : ''}`;
   root.dataset.route = d.route;
+
+  const sig = `${S.bg}|${S.weather}|${MASCOT.head}`;
+  if (amb.dataset.sig !== sig) { amb.className = `amb-layer amb-${S.bg} wx-${S.weather}`; amb.innerHTML = S.bg === 'none' ? '' : ambientHtml(); amb.dataset.sig = sig; }
+  amb.hidden = !showAmb;
+
   const inner = `${header(d, v)}<div class="content">${v.body}</div>${v.composer || ''}`;
   const appHtml = d.form === 'tablet'
     ? `<div class="tablet-app">${sidebar(d)}<div class="main">${inner}</div></div>`
-    : `<div class="app">${inner}${v.fab ? `<button class="fab" data-a="tab:ask">${ic('spark')}Ask</button>` : ''}${bottomNav(d)}</div>`;
+    : `<div class="app">${inner}${v.fab ? `<button class="fab" data-a="tab:ask">${askIc()}Ask</button>` : ''}${bottomNav(d)}</div>`;
   const toast = d.toast ? `<div class="toast" role="status">${ic('check')}${esc(d.toast)}</div>` : '';
-  root.innerHTML = statusBar(d) + appHtml + `<div class="homebar"><span></span></div>` + sheet(d) + toast;
+  ui.innerHTML = statusBar(d) + appHtml + `<div class="homebar"><span></span></div>` + sheet(d) + toast;
 
-  const content = root.querySelector('.content');
+  const content = ui.querySelector('.content');
   if (d.stick) { content.scrollTop = content.scrollHeight; d.stick = false; }
   else if (sameRoute) content.scrollTop = prevScroll;
   if (focused) {
-    const inp = root.querySelector(`[data-input="${focused}"]`);
+    const inp = ui.querySelector(`[data-input="${focused}"]`);
     if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
   }
 }
@@ -752,7 +912,7 @@ function send(d, text) {
   d.stick = true;
   renderAll();
   setTimeout(() => {
-    Object.assign(pending, aiReply(text, d), { typing: false });
+    Object.assign(pending, aiReply(text, d), { typing: false, model: activeModel().name });
     d.stick = true;
     render(d);
   }, 900);
@@ -772,7 +932,24 @@ function act(d, a, el) {
     case 'scope': d.scopes[x] = !d.scopes[x]; if (d.mode === 'search' && d.lastQuery) d.results = semanticSearch(d.lastQuery, d.scopes); break;
     case 'suggest': d.draft = ''; send(d, el.dataset.q); return;
     case 'send': send(d, d.draft); return;
-    case 'sheet': d.sheet = +x; d.sheetFresh = true; break;
+    case 'sheet': d.sheet = { type: 'bay', id: +x }; d.sheetFresh = true; break;
+    case 'model': {
+      const m = model(x);
+      if (m.cloud) { d.sheet = { type: 'cloud', id: x, ack: false }; d.sheetFresh = true; break; }
+      if (!m.installed) {
+        if (m.downloading) return;
+        m.downloading = true; toast(d, `Downloading ${m.name} (${m.size})…`);
+        setTimeout(() => { m.downloading = false; m.installed = true; renderAll(); }, 2500);
+        break;
+      }
+      S.activeModel = x; toast(d, `${m.name} loaded on your NAS`); break;
+    }
+    case 'cloud-ack': d.sheet.ack = !d.sheet.ack; break;
+    case 'use-cloud': if (!d.sheet || !d.sheet.ack) return; S.activeModel = d.sheet.id; d.sheet = null; toast(d, `Switched to ${activeModel().name}. Data now leaves your NAS.`); break;
+    case 'set-bg': S.bg = x; break;
+    case 'set-weather': S.weather = x; break;
+    case 'ask-icon': S.askIcon = x; break;
+    case 'reduce-motion': S.reduceMotion = !S.reduceMotion; break;
     case 'close-sheet': d.sheet = null; break;
     case 'locate': S.locating = !S.locating; toast(d, S.locating ? 'Bay 3 LED is blinking yellow' : 'Stopped blinking'); break;
     case 'reconnect': S.bays.find(b => b.id === +x).state = 'ok'; S.bays.find(b => b.id === +x).temp = 40; S.locating = false; S.pool.rebuilding = true; d.sheet = null;
@@ -851,3 +1028,7 @@ addEventListener('resize', fit);
 
 renderAll();
 fit();
+
+const probe = new Image();
+probe.onload = () => { MASCOT.head = probe.src; renderAll(); };
+probe.src = 'assets/mascot-head.png';

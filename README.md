@@ -29,7 +29,9 @@ Open `index.html` in a browser. It needs no build step and no dependencies; font
 | **Users & access** | List of people with their roles. Per-person controls cover role, storage quota, folder access (none / read / read & write) and AI permissions (Ask, Drive, Web, agents). |
 | **Connected apps** | Google Drive, Calendar, Photos and Gmail, plus web search, a Matter / Thread smart-home hub, OneDrive and Dropbox. You can connect or disconnect each one. |
 | **Devices** | Smart-home and network devices grouped by room, with on/off controls and alerts. |
-| **Settings** | Theme, NAS connection and remote access, local AI model, re-indexing and notifications. |
+| **AI model** | Shows which model is loaded. Switch between on-device models, or download one that isn't installed. Cloud models need you to tick a disclaimer before switching: your questions and file content leave the NAS and could be exposed. While a cloud model is active, Ask and Home show a warning. Each person also has an "Allow cloud models" permission. |
+| **Theme & background** | Light or dark theme. Choose an animated background for Home and Ask: plain, waves, live weather (sunny, cloudy, rain, snow, thunderstorm, clear night) or the mascot. The Ask icon can be the sparkle or the mascot head. "Reduce motion" keeps the background still. |
+| **Settings** | NAS connection and remote access, AI model, re-indexing and notifications. |
 
 Try these in **Ask**: "plan my day", "find beach photos from last summer", "summarise my insurance policy", "how are my devices?", "is my storage healthy?".
 
@@ -38,6 +40,9 @@ Try these in **Ask**: "plan my day", "find beach photos from last summer", "summ
 - All data is sample data and the assistant's replies are scripted. Nothing connects to a real NAS, Google account or the web.
 - The brand accent (`--accent` in `styles.css`) is an **approximation** of ZOTAC yellow. Replace it with the official hex value if you have one.
 - Google, Microsoft and Dropbox services are shown with plain letter tiles, not their official logos.
+- Model names are generic placeholders ("Local LLM · 8B", "Cloud model A"). They don't refer to real products.
+- The weather is sample data with a switcher, so you can preview every effect. A real app would use the forecast for the NAS's location.
+- **Mascot artwork:** the repo doesn't include any. Add a transparent PNG at `assets/mascot-head.png` and it's picked up automatically. Until then a labelled "M" placeholder is shown, and the browser console logs one harmless 404 for the missing file.
 
 ### Files
 
